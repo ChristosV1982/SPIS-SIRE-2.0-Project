@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SIRE 2.0 Questionnaire (Admin Mode)</title>
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f3f5f9; }
+    #container { display: flex; flex-direction: column; height: 100vh; }
+    #filters {
+      background: #235ea4; color: #fff; padding: 18px 20px 10px 20px;
+      display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end;
+    }
+    #admin-bar {
+      background: #193d6e;
+      color: #f8faff;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    #admin-bar button {
+      background: #ffc25f;
+      color: #1a2c46;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      padding: 7px 18px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    #admin-bar button:hover { background: #ffad1f; }
+    #checkbox-filters, #vessel-checkbox-filters, #qtype-checkbox-filters {
+      display: flex; align-items: center; gap: 10px;
+      margin-right: 24px;
+      background: #204c84;
+      padding: 7px 15px;
+      border-radius: 7px;
+    }
+    #checkbox-filters label, #vessel-checkbox-filters label, #qtype-checkbox-filters label {
+      font-weight: 600; margin: 0 5px 0 0; color: #b2d5ff;
+      font-size: 1.03em;
+    }
+    #filters label { font-weight: 600; margin-right: 6px; }
+    #filters select, #filters input[type="text"] {
+      border-radius: 4px; border: none; padding: 6px 8px; margin-right: 20px; margin-bottom: 6px;
+    }
+    #main-content { flex: 1; display: flex; min-height: 0; }
+    #questions-list {
+      width: 40%; max-width: 500px; min-width: 270px;
+      background: #f9fafc; border-right: 2px solid #dde3ec; overflow-y: auto;
+      padding: 20px 12px 20px 20px;
+    }
+    #questions-list .qitem {
+      cursor: pointer; padding: 12px 6px; margin-bottom: 6px; border-radius: 6px; transition: background 0.13s;
+    }
+    #questions-list .qitem.selected {
+      background: #e5efff; font-weight: bold; border-left: 4px solid #235ea4;
+    }
+    #questions-list .qitem:hover { background: #e7edfc; }
+    #details-panel {
+      flex: 1; padding: 30px 28px 30px 32px; overflow-y: auto; background: #fff;
+      border-radius: 0 0 0 16px; box-shadow: -4px 0 8px rgba(34,94,164,0.04);
+    }
+    .attr-row { margin-bottom: 10px; }
+    .attr-row label { font-weight: bold; }
+    .attr-row .attr-val {
+      margin-left: 6px;
+      white-space: pre-line;
+    }
+    .ems-edit-input { width: 97%; margin-top: 2px; margin-bottom: 5px; border-radius: 4px; border: 1px solid #b7c6e2; padding: 4px; }
+    .ems-edit-input:focus { outline: 2px solid #235ea4; }
+    .answer-block { margin-top: 18px; }
+    .answer-block label { font-weight: 600; }
+    .answer-block select, .answer-block textarea {
+      margin-top: 4px; display: block; border-radius: 4px; border: 1px solid #b7c6e2;
+      padding: 7px; margin-bottom: 10px; width: 320px; max-width: 100%; background: #f6faff;
+    }
+    .answer-block textarea { height: 50px; }
+    .submit-btn {
+      font-size: 1.1em; background: #235ea4; color: #fff; border: none; border-radius: 6px;
+      padding: 10px 24px; cursor: pointer; margin-top: 14px; margin-bottom: 30px;
+    }
+    .submit-btn:hover { background: #174272; }
+    .remarks-row { display: flex; gap: 14px; margin-top: 12px; }
+    .remarks-block { flex: 1; }
+    .remarks-block textarea { width: 100%; min-width: 0; resize: vertical; border-radius: 6px; border: 1px solid #b7c6e2; background: #f7fafb; font-size: 1em; }
+    .remarks-block .attr-val { background: #f5f6fa; border-radius: 5px; padding: 5px 7px; min-height: 44px; display: block; }
+
+    /* Collapsible styles */
+    .collapsible-label {
+      cursor: pointer; 
+      background: #eef4fc; 
+      border-radius: 7px 7px 0 0;
+      font-weight: bold; 
+      padding: 8px 16px 8px 10px; 
+      user-select: none;
+      transition: background 0.12s;
+      margin-bottom: 0;
+      margin-top: 12px;
+      position: relative;
+    }
+    .collapsible-label::after {
+      content: '▼';
+      float: right;
+      font-size: 0.93em;
+      color: #888;
+      transition: transform 0.2s;
+    }
+    .collapsible-label.collapsed::after { content: '►'; }
+    .collapsible-content {
+      display: none;
+      background: #fafbff;
+      padding: 14px 10px 8px 18px;
+      border-radius: 0 0 7px 7px;
+      border-top: 1px solid #e1e6f1;
+      margin-bottom: 7px;
+    }
+    .collapsible-content.open { display: block; }
+
+    @media (max-width: 900px) {
+      #main-content { flex-direction: column; }
+      #questions-list { width: 100%; max-width: none; min-width: 0; border-right: none; border-bottom: 2px solid #dde3ec;}
+      #details-panel { padding: 20px 10px 10px 10px;}
+      .remarks-row { flex-direction: column; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="admin-bar">
+    <span><b>Admin Mode:</b></span>
+    <button id="toggleAdminBtn">Enable Editing</button>
+    <button id="downloadJsonBtn" style="display:none;">Download JSON</button>
+    <span id="adminStatus" style="margin-left:16px;"></span>
+  </div>
+  <div id="container">
+    <div id="filters">
+      <div id="checkbox-filters">
+        <label>Response Type:</label>
+        <input type="checkbox" id="hardwareCheck" checked>
+        <label for="hardwareCheck">Hardware</label>
+        <input type="checkbox" id="humanCheck" checked>
+        <label for="humanCheck">Human</label>
+        <input type="checkbox" id="processCheck" checked>
+        <label for="processCheck">Process</label>
+      </div>
+      <div id="vessel-checkbox-filters">
+        <label>Vessel Type:</label>
+        <input type="checkbox" id="chemicalCheck" checked>
+        <label for="chemicalCheck">Chemical</label>
+        <input type="checkbox" id="lngCheck" checked>
+        <label for="lngCheck">LNG</label>
+        <input type="checkbox" id="lpgCheck" checked>
+        <label for="lpgCheck">LPG</label>
+        <input type="checkbox" id="oilCheck" checked>
+        <label for="oilCheck">Oil</label>
+      </div>
+      <div id="qtype-checkbox-filters"></div>
+    </div>
+    <div id="main-content">
+      <div id="questions-list"></div>
+      <div id="details-panel">
+        <div style="color:#aaa; font-size: 1.1em;">Select a question to view details.</div>
+      </div>
+    </div>
+  </div>
+  <script>
+    let questionsData = [];
+    let filteredQuestions = [];
+    let selectedIdx = -1;
+    let filters = {};
+    let allColumns = [];
+    let filterColumns = [
+      "Question Response Type", "Photo Response Requirement"
+    ];
+    let responseTypeChecks = { hardware: true, human: true, process: true };
+    let vesselTypeChecks = { chemical: true, lng: true, lpg: true, oil: true };
+    let questionTypeChecks = {}; // Dynamically populated
+    let adminMode = false;
+
+    // Collapsible state
+    if (typeof window.collapsibleState === 'undefined') window.collapsibleState = {};
+    function toggleCollapse(cid) {
+      window.collapsibleState[cid] = !window.collapsibleState[cid];
+      renderDetailsPanel();
+    }
+
+    function niceLabel(key) {
+      if (key === "No.") return "Question Number";
+      if (key === "Question") return "Question Text";
+      if (key === "Question Type") return "Question Type";
+      if (key === "Risk Level") return "Risk Calculation Factor";
+      if (key === "Photo Response") return "Photo Response Requirement";
+      if (key === "Inspection Guidance") return "Question Inspection Guidance";
+      if (key === "Suggested Inspector Actions") return "Suggested Inspector Actions";
+      if (key === "Expected Evidence") return "Question Expected Evidence";
+      if (key === "Potential Grounds for Negative Observations") return "Potential Ground for Negative Observations";
+      return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function padQuestionNumber(qn) {
+      if (!qn) return "";
+      let parts = qn.toString().split('.');
+      while (parts.length < 4) { parts.push('0'); }
+      parts = parts.map(x => x.padStart(2, '0'));
+      return parts.slice(0, 4).join('.');
+    }
+
+    function getCombinedResponseType(q) {
+      let types = [];
+      if (
+        q["Hardware Response Type"] && 
+        !["false", "none", ""].includes(String(q["Hardware Response Type"]).trim().toLowerCase())
+      ) types.push("Hardware");
+      if (
+        q["Human Response Type"] && 
+        !["false", "none", ""].includes(String(q["Human Response Type"]).trim().toLowerCase())
+      ) types.push("Human");
+      if (
+        q["Process Response Type"] && 
+        !["false", "none", ""].includes(String(q["Process Response Type"]).trim().toLowerCase())
+      ) types.push("Process");
+      return types.length ? types.join(", ") : "";
+    }
+
+    function getVesselTypes(q) {
+      return (q["Vessel Type"] || "").split(",").map(v => v.trim()).filter(v => v);
+    }
+
+    // ADMIN MODE HANDLERS
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('toggleAdminBtn').onclick = function() {
+        adminMode = !adminMode;
+        this.textContent = adminMode ? "Disable Editing" : "Enable Editing";
+        document.getElementById('downloadJsonBtn').style.display = adminMode ? "" : "none";
+        document.getElementById('adminStatus').textContent = adminMode ? "Admin Mode Enabled" : "";
+        renderDetailsPanel();
+      };
+      document.getElementById('downloadJsonBtn').onclick = function() {
+        downloadJson();
+      };
+    });
+
+    fetch('sire_questions_all_columns_named.json')
+      .then(resp => resp.json())
+      .then(data => {
+        questionsData = data;
+        allColumns = Object.keys(questionsData[0]);
+        setupFilters();
+        setupCheckboxFilters();
+        setupVesselCheckboxFilters();
+        setupQTypeCheckboxFilters();
+        applyFilters();
+      });
+
+    function setupFilters() {
+      const filtersArea = document.getElementById('filters');
+      filterColumns.filter(col => allColumns.includes(col)).forEach(col => {
+        filters[col] = "";
+        const label = document.createElement('label');
+        label.innerText = niceLabel(col);
+        const select = document.createElement('select');
+        select.id = "filter_" + col;
+        select.innerHTML = '<option value="">All</option>';
+        let opts = Array.from(new Set(questionsData.map(q => q[col]).filter(v => v !== undefined && v !== "")));
+        opts.forEach(opt => {
+          const o = document.createElement('option');
+          o.value = opt;
+          o.textContent = opt;
+          select.appendChild(o);
+        });
+        select.onchange = (e) => { filters[col] = e.target.value; applyFilters(); };
+        label.appendChild(select);
+        filtersArea.appendChild(label);
+      });
+      let search = document.createElement('input');
+      search.type = 'text'; search.placeholder = 'Search...';
+      search.style.marginLeft = '20px';
+      search.oninput = e => { filters['search'] = e.target.value.toLowerCase(); applyFilters(); }
+      filtersArea.appendChild(search);
+    }
+
+    function setupCheckboxFilters() {
+      document.getElementById('hardwareCheck').onchange = function() {
+        responseTypeChecks.hardware = this.checked; applyFilters();
+      };
+      document.getElementById('humanCheck').onchange = function() {
+        responseTypeChecks.human = this.checked; applyFilters();
+      };
+      document.getElementById('processCheck').onchange = function() {
+        responseTypeChecks.process = this.checked; applyFilters();
+      };
+    }
+
+    function setupVesselCheckboxFilters() {
+      document.getElementById('chemicalCheck').onchange = function() {
+        vesselTypeChecks.chemical = this.checked; applyFilters();
+      };
+      document.getElementById('lngCheck').onchange = function() {
+        vesselTypeChecks.lng = this.checked; applyFilters();
+      };
+      document.getElementById('lpgCheck').onchange = function() {
+        vesselTypeChecks.lpg = this.checked; applyFilters();
+      };
+      document.getElementById('oilCheck').onchange = function() {
+        vesselTypeChecks.oil = this.checked; applyFilters();
+      };
+    }
+
+    function setupQTypeCheckboxFilters() {
+      const qtypeDiv = document.getElementById('qtype-checkbox-filters');
+      qtypeDiv.innerHTML = '';
+      let qtypes = Array.from(new Set(questionsData.map(q => q["Question Type"]).filter(v => v && v !== "")));
+      qtypes.forEach(type => { questionTypeChecks[type] = true; });
+      if (!qtypes.length) return;
+      const label = document.createElement('label');
+      label.textContent = "Question Type:";
+      qtypeDiv.appendChild(label);
+      qtypes.forEach(type => {
+        const id = "qtype_" + type.replace(/\W/g, "_");
+        const cb = document.createElement('input');
+        cb.type = "checkbox";
+        cb.id = id;
+        cb.checked = true;
+        cb.onchange = function() { questionTypeChecks[type] = this.checked; applyFilters(); };
+        qtypeDiv.appendChild(cb);
+        const cbLabel = document.createElement('label');
+        cbLabel.setAttribute('for', id);
+        cbLabel.textContent = type;
+        qtypeDiv.appendChild(cbLabel);
+      });
+    }
+
+    function getVisibleQuestions() {
+      let questions = filteredQuestions.filter(q =>
+        q['No.'] && q['Question'] &&
+        q['Question'].trim().toLowerCase() !== "question"
+      );
+      const useHardware = responseTypeChecks.hardware;
+      const useHuman = responseTypeChecks.human;
+      const useProcess = responseTypeChecks.process;
+      questions = (!useHardware && !useHuman && !useProcess) ? questions :
+        questions.filter(q => {
+          let match = false;
+          if (useHardware && q["Hardware Response Type"] && !["false", "none", ""].includes(String(q["Hardware Response Type"]).trim().toLowerCase())) match = true;
+          if (useHuman && q["Human Response Type"] && !["false", "none", ""].includes(String(q["Human Response Type"]).trim().toLowerCase())) match = true;
+          if (useProcess && q["Process Response Type"] && !["false", "none", ""].includes(String(q["Process Response Type"]).trim().toLowerCase())) match = true;
+          return match;
+        });
+      const useChemical = vesselTypeChecks.chemical;
+      const useLNG = vesselTypeChecks.lng;
+      const useLPG = vesselTypeChecks.lpg;
+      const useOil = vesselTypeChecks.oil;
+      questions = (!useChemical && !useLNG && !useLPG && !useOil) ? questions :
+        questions.filter(q => {
+          const vessels = getVesselTypes(q);
+          let match = false;
+          if (useChemical && vessels.includes("Chemical")) match = true;
+          if (useLNG && vessels.includes("LNG")) match = true;
+          if (useLPG && vessels.includes("LPG")) match = true;
+          if (useOil && vessels.includes("Oil")) match = true;
+          return match;
+        });
+      let enabledTypes = Object.keys(questionTypeChecks).filter(type => questionTypeChecks[type]);
+      questions = (!enabledTypes.length) ? questions :
+        questions.filter(q => !q["Question Type"] || enabledTypes.includes(q["Question Type"]));
+      return questions;
+    }
+
+    function applyFilters() {
+      filteredQuestions = questionsData.filter(q => {
+        let match = true;
+        for (let key in filters) {
+          if (key === "search" && filters[key]) {
+            if (
+              !(q['No.'] && q['No.'].toString().toLowerCase().includes(filters[key])) &&
+              !(q['Question'] && q['Question'].toLowerCase().includes(filters[key]))
+            ) {
+              return false;
+            }
+          } else if (key !== "search" && filters[key] && q[key] != filters[key]) {
+            return false;
+          }
+        }
+        if (!q['No.'] || !q['Question'] || q['Question'].trim().toLowerCase() === "question") {
+          return false;
+        }
+        return match;
+      });
+      selectedIdx = -1;
+      renderQuestionsList();
+      renderDetailsPanel();
+    }
+
+    function renderQuestionsList() {
+      const list = document.getElementById('questions-list');
+      list.innerHTML = '';
+      let visibleQuestions = getVisibleQuestions();
+      if (!visibleQuestions.length) {
+        list.innerHTML = '<div style="color:#888; font-size:1.1em;">No questions found.</div>';
+        return;
+      }
+      visibleQuestions.forEach((q, i) => {
+        const div = document.createElement('div');
+        div.className = 'qitem' + (selectedIdx === i ? ' selected' : '');
+        div.innerHTML = `<span>${padQuestionNumber(q['No.'])}</span>: <span>${q['Question']}</span>`;
+        div.onclick = () => { selectedIdx = i; renderQuestionsList(); renderDetailsPanel(); };
+        list.appendChild(div);
+      });
+    }
+
+    function renderDetailsPanel() {
+      const panel = document.getElementById('details-panel');
+      let visibleQuestions = getVisibleQuestions();
+      if (selectedIdx === -1 || !visibleQuestions.length || !visibleQuestions[selectedIdx]) {
+        panel.innerHTML = '<div style="color:#aaa; font-size: 1.1em;">Select a question to view details.</div>';
+        return;
+      }
+      const q = visibleQuestions[selectedIdx];
+      let html = `<h2 style="margin-top:0">${q['No.'] ? 'Question ' + padQuestionNumber(q['No.']) : 'Question Details'}</h2>`;
+      if (q["Question Type"]) {
+        html += `<div class="attr-row"><label>Question Type:</label><span class="attr-val">${q["Question Type"]}</span></div>`;
+      }
+      const responseType = getCombinedResponseType(q);
+      if (responseType) {
+        html += `<div class="attr-row"><label>Question Response Type:</label><span class="attr-val">${responseType}</span></div>`;
+      }
+      const visibleCols = [
+        "Question Text", "Photo Response Requirement", "Vessel Type",
+        "Inspection Guidance", "Suggested Inspector Actions", "Expected Evidence", "Potential Grounds for Negative Observations"
+      ];
+      allColumns.forEach(key => {
+        if (
+          visibleCols.includes(key)
+          && !["Hardware Response Type", "Human Response Type", "Process Response Type"].includes(key)
+          && q[key] !== ''
+        ) {
+          // --- Collapsible panels for the four main fields ---
+          if (
+            key === "Inspection Guidance" ||
+            key === "Suggested Inspector Actions" ||
+            key === "Expected Evidence" ||
+            key === "Potential Grounds for Negative Observations"
+          ) {
+            let cid = key.replace(/\s/g, '') + '_' + selectedIdx;
+            if (!(cid in window.collapsibleState)) window.collapsibleState[cid] = false; // collapsed by default
+            html += `<div>
+              <div class="collapsible-label${window.collapsibleState[cid] ? '' : ' collapsed'}" id="colLabel_${cid}" onclick="toggleCollapse('${cid}')">
+                ${niceLabel(key)}
+              </div>
+              <div class="collapsible-content${window.collapsibleState[cid] ? ' open' : ''}" id="colContent_${cid}">`;
+
+            // Inner content (editable or not)
+            if (key === "Inspection Guidance" || key === "Suggested Inspector Actions") {
+              html += adminMode
+                ? `<textarea class="ems-edit-input" id="blockEdit_${key.replace(/\s/g, '')}_${selectedIdx}" rows="5" style="width:98%;">${q[key]}</textarea>`
+                : `<span class="attr-val" style="display:block;margin-left:2px;">${q[key]}</span>`;
+            }
+            else if (key === "Expected Evidence") {
+              if (!Array.isArray(q.ExpEv_Bullets)) {
+                let bullets = (q[key] || "").split(/\n?•/g).map(t => t.trim()).filter(Boolean);
+                q.ExpEv_Bullets = bullets.map(b => ({
+                  text: b,
+                  form: q["eSMS Form(s)"] || "",
+                  ch: q["eSMS Ch. References"] || "",
+                  remarks: q["Observation Remarks"] || ""
+                }));
+              }
+              q.ExpEv_Bullets.forEach((bullet, idx) => {
+                html += `<div style="margin:10px 0 10px 0;padding:8px 10px 8px 10px;border-left:3px solid #b2d5ff;background:#f8fbff;border-radius:6px;">`;
+                html += adminMode
+                  ? `<textarea class="ems-edit-input" id="expEvBullet_${selectedIdx}_${idx}" rows="2" style="width:99%;margin-bottom:2px;">${bullet.text}</textarea>`
+                  : `<div style="margin-bottom:6px;">• ${bullet.text}</div>`;
+                html += `<div style="font-size:0.96em;margin-left:14px;line-height:1.6;">`;
+                if (adminMode) {
+                  html += `
+                    <b>eSMS Form:</b> <input type="text" class="ems-edit-input" id="expEvForm_${selectedIdx}_${idx}" value="${bullet.form || ""}" style="width:97%"><br>
+                    <b>eSMS Ch. Reference:</b> <input type="text" class="ems-edit-input" id="expEvCh_${selectedIdx}_${idx}" value="${bullet.ch || ""}" style="width:97%"><br>
+                    <b>Remarks:</b> <input type="text" class="ems-edit-input" id="expEvRem_${selectedIdx}_${idx}" value="${bullet.remarks || ""}" style="width:97%">
+                  `;
+                } else {
+                  html += `
+                    <b>eSMS Form:</b> <span class="attr-val">${bullet.form || "-"}</span><br>
+                    <b>eSMS Ch. Reference:</b> <span class="attr-val">${bullet.ch || "-"}</span><br>
+                    <b>Remarks:</b> <span class="attr-val">${bullet.remarks || "-"}</span>
+                  `;
+                }
+                html += `</div></div>`;
+              });
+              if (adminMode) {
+                html += `<button type="button" id="addExpEvBulletBtn" style="margin:14px 0 0 0;display:block;padding:7px 20px;border-radius:5px;border:none;background:#235ea4;color:#fff;font-weight:bold;cursor:pointer;">+ Add Bullet</button>`;
+              }
+            }
+            else if (key === "Potential Grounds for Negative Observations") {
+              let bullets = (Array.isArray(q.NegObs_Bullets) ? q.NegObs_Bullets : (q[key] || "").split(/\n?•/g).map(t => t.trim()).filter(Boolean));
+              if (!bullets.length && (q[key] || "")) {
+                bullets = (q[key] || "").split(/\n?•/g).map(t => t.trim()).filter(Boolean);
+              }
+              if (adminMode) q.NegObs_Bullets = bullets;
+              if (!q.NegObs_Remarks_PerBullet || !Array.isArray(q.NegObs_Remarks_PerBullet) || q.NegObs_Remarks_PerBullet.length !== bullets.length) {
+                let newArr = [];
+                for (let i = 0; i < bullets.length; ++i) {
+                  newArr[i] = q.NegObs_Remarks_PerBullet && q.NegObs_Remarks_PerBullet[i]
+                    ? q.NegObs_Remarks_PerBullet[i]
+                    : ["", ""];
+                }
+                q.NegObs_Remarks_PerBullet = newArr;
+              }
+              bullets.forEach((b, idx) => {
+                html += `<div style="margin:10px 0 10px 0;padding:8px 10px 8px 10px;border-left:3px solid #b2d5ff;background:#f8fbff;border-radius:6px;">`;
+                html += adminMode
+                  ? `<textarea class="ems-edit-input" id="negObsBullet_${selectedIdx}_${idx}" rows="2" style="width:99%;margin-bottom:8px;">${b}</textarea>`
+                  : `<div style="margin-bottom:6px;">• ${b}</div>`;
+                html += `<div class="remarks-row">`;
+                [1, 2].forEach(num => {
+                  html += `
+                    <div class="remarks-block">
+                      <label style="font-weight:bold;display:block;margin-bottom:4px;">Remarks ${num}:</label>
+                      ${
+                        adminMode
+                        ? `<textarea class="ems-edit-input" id="negObsRem_${selectedIdx}_${idx}_${num}" rows="3">${q.NegObs_Remarks_PerBullet[idx][num-1] || ""}</textarea>`
+                        : `<div class="attr-val">${q.NegObs_Remarks_PerBullet[idx][num-1] || "-"}</div>`
+                      }
+                    </div>
+                  `;
+                });
+                html += `</div></div>`;
+              });
+              if (adminMode) {
+                html += `<button type="button" id="addNegObsBulletBtn" style="margin:14px 0 0 0;display:block;padding:7px 20px;border-radius:5px;border:none;background:#235ea4;color:#fff;font-weight:bold;cursor:pointer;">+ Add Bullet</button>`;
+              }
+            }
+            html += `</div></div>`; // End collapsible content/wrapper
+          }
+          // --- End collapsible ---
+          // Other (non-collapsible) fields
+          else {
+            html += `<div class="attr-row"><label>${niceLabel(key)}:</label><span class="attr-val">${q[key]}</span></div>`;
+          }
+        }
+      });
+      html += `
+        <div class="answer-block">
+          <form id="answerForm" onsubmit="event.preventDefault();showAnswerSummary();">
+            <label>Answer:
+              <select id="answerSelect">
+                <option value="">Select</option>
+                <option>Yes</option>
+                <option>No</option>
+                <option>Not Applicable</option>
+                <option>Not Seen</option>
+              </select>
+            </label>
+            <br>
+            <label>Comments:<br>
+              <textarea id="commentBox"></textarea>
+            </label>
+            <br>
+            <button type="submit" class="submit-btn">Save Answer</button>
+          </form>
+        </div>
+        <div id="answerResult"></div>
+      `;
+      panel.innerHTML = html;
+
+      // --- ADMIN SAVE LOGIC ---
+      // Expected Evidence
+      if (adminMode && q.ExpEv_Bullets) {
+        q.ExpEv_Bullets.forEach((bullet, idx) => {
+          const bulletInput = document.getElementById(`expEvBullet_${selectedIdx}_${idx}`);
+          const formInput   = document.getElementById(`expEvForm_${selectedIdx}_${idx}`);
+          const chInput     = document.getElementById(`expEvCh_${selectedIdx}_${idx}`);
+          const remInput    = document.getElementById(`expEvRem_${selectedIdx}_${idx}`);
+          if (bulletInput)  bulletInput.onchange = (e) => { bullet.text = e.target.value; updateExpectedEvidence(q); };
+          if (formInput)    formInput.onchange   = (e) => { bullet.form = e.target.value; };
+          if (chInput)      chInput.onchange     = (e) => { bullet.ch = e.target.value; };
+          if (remInput)     remInput.onchange    = (e) => { bullet.remarks = e.target.value; };
+        });
+        const addBtn = document.getElementById("addExpEvBulletBtn");
+        if (addBtn) {
+          addBtn.onclick = function() {
+            q.ExpEv_Bullets.push({text:"",form:"",ch:"",remarks:""});
+            updateExpectedEvidence(q);
+            renderDetailsPanel();
+          };
+        }
+      }
+      // Potential Grounds for Negative Observations
+      if (adminMode && q.NegObs_Bullets && q.NegObs_Remarks_PerBullet) {
+        q.NegObs_Bullets.forEach((b, idx) => {
+          const bulletInput = document.getElementById(`negObsBullet_${selectedIdx}_${idx}`);
+          if (bulletInput) {
+            bulletInput.onchange = (e) => {
+              q.NegObs_Bullets[idx] = e.target.value;
+              q["Potential Grounds for Negative Observations"] = q.NegObs_Bullets.map(bb => bb.trim() ? "• " + bb.trim() : "").filter(Boolean).join("\n");
+            };
+          }
+          [1,2].forEach(num => {
+            const negInput = document.getElementById(`negObsRem_${selectedIdx}_${idx}_${num}`);
+            if (negInput) {
+              negInput.onchange = (e) => { q.NegObs_Remarks_PerBullet[idx][num-1] = e.target.value; };
+            }
+          });
+        });
+        const addBtn = document.getElementById("addNegObsBulletBtn");
+        if (addBtn) {
+          addBtn.onclick = function() {
+            q.NegObs_Bullets.push("");
+            q.NegObs_Remarks_PerBullet.push(["", ""]);
+            renderDetailsPanel();
+          };
+        }
+      }
+      // Editable: Inspector Actions & Inspection Guidance
+      if (adminMode) {
+        ["Inspection Guidance", "Suggested Inspector Actions"].forEach(field => {
+          const area = document.getElementById(`blockEdit_${field.replace(/\s/g, '')}_${selectedIdx}`);
+          if (area) {
+            area.onchange = (e) => { q[field] = e.target.value; };
+          }
+        });
+      }
+      function updateExpectedEvidence(qobj) {
+        qobj["Expected Evidence"] = qobj.ExpEv_Bullets.map(b => b.text && b.text.trim() ? "• " + b.text.trim() : "").filter(Boolean).join("\n");
+      }
+    }
+
+    function showAnswerSummary() {
+      const answer = document.getElementById('answerSelect').value;
+      const comment = document.getElementById('commentBox').value;
+      document.getElementById('answerResult').innerHTML = 
+        `<div style="background:#eaf6ff;padding:10px;border-radius:6px;margin-top:10px;">
+          <b>Saved!</b><br>Answer: <b>${answer || 'None'}</b><br>Comments: ${comment ? comment : '<i>None</i>'}
+        </div>`;
+    }
+
+    function downloadJson() {
+      const dataStr = JSON.stringify(questionsData, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "sire_questions_all_columns_named_EDITED.json";
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(url); }, 500);
+    }
+  </script>
+</body>
+</html>
