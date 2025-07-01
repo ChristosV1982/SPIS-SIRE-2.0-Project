@@ -3,135 +3,81 @@
 <head>
   <meta charset="UTF-8">
   <title>SIRE 2.0 Questionnaire (Admin Mode)</title>
+  <link rel="stylesheet" href="style.css">
   <style>
-    body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f3f5f9; }
-    #container { display: flex; flex-direction: column; height: 100vh; }
-    #filters {
-      background: #235ea4; color: #fff; padding: 18px 20px 10px 20px;
-      display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end;
+    @media print {
+      body, html { background: #fff !important; }
+      #admin-bar, #filters, #main-content > #questions-list, #version-bar, #question-counter {
+        display: none !important;
+      }
+      #printView, #printSingleView { margin: 0 !important; }
+      .print-break { page-break-before: always !important; }
+      .only-print { display: block !important; }
+      .no-print { display: none !important; }
+      @page { size: A4; margin: 18mm 16mm 18mm 16mm; }
     }
-    #admin-bar {
-      background: #193d6e;
-      color: #f8faff;
-      padding: 10px 18px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    #admin-bar button {
-      background: #ffc25f;
-      color: #1a2c46;
-      font-weight: bold;
-      border: none;
-      border-radius: 5px;
-      padding: 7px 18px;
-      cursor: pointer;
-      margin-left: 10px;
-    }
-    #admin-bar button:hover { background: #ffad1f; }
-    #checkbox-filters, #vessel-checkbox-filters, #qtype-checkbox-filters {
-      display: flex; align-items: center; gap: 10px;
-      margin-right: 24px;
-      background: #204c84;
-      padding: 7px 15px;
-      border-radius: 7px;
-    }
-    #checkbox-filters label, #vessel-checkbox-filters label, #qtype-checkbox-filters label {
-      font-weight: 600; margin: 0 5px 0 0; color: #b2d5ff;
-      font-size: 1.03em;
-    }
-    #filters label { font-weight: 600; margin-right: 6px; }
-    #filters select, #filters input[type="text"] {
-      border-radius: 4px; border: none; padding: 6px 8px; margin-right: 20px; margin-bottom: 6px;
-    }
-    #main-content { flex: 1; display: flex; min-height: 0; }
-    #questions-list {
-      width: 40%; max-width: 500px; min-width: 270px;
-      background: #f9fafc; border-right: 2px solid #dde3ec; overflow-y: auto;
-      padding: 20px 12px 20px 20px;
-    }
-    #questions-list .qitem {
-      cursor: pointer; padding: 12px 6px; margin-bottom: 6px; border-radius: 6px; transition: background 0.13s;
-    }
-    #questions-list .qitem.selected {
-      background: #e5efff; font-weight: bold; border-left: 4px solid #235ea4;
-    }
-    #questions-list .qitem:hover { background: #e7edfc; }
-    #details-panel {
-      flex: 1; padding: 30px 28px 30px 32px; overflow-y: auto; background: #fff;
-      border-radius: 0 0 0 16px; box-shadow: -4px 0 8px rgba(34,94,164,0.04);
-    }
-    .attr-row { margin-bottom: 10px; }
-    .attr-row label { font-weight: bold; }
-    .attr-row .attr-val {
-      margin-left: 6px;
-      white-space: pre-line;
-    }
-    .ems-edit-input { width: 97%; margin-top: 2px; margin-bottom: 5px; border-radius: 4px; border: 1px solid #b7c6e2; padding: 4px; }
-    .ems-edit-input:focus { outline: 2px solid #235ea4; }
-    .answer-block { margin-top: 18px; }
-    .answer-block label { font-weight: 600; }
-    .answer-block select, .answer-block textarea {
-      margin-top: 4px; display: block; border-radius: 4px; border: 1px solid #b7c6e2;
-      padding: 7px; margin-bottom: 10px; width: 320px; max-width: 100%; background: #f6faff;
-    }
-    .answer-block textarea { height: 50px; }
-    .submit-btn {
-      font-size: 1.1em; background: #235ea4; color: #fff; border: none; border-radius: 6px;
-      padding: 10px 24px; cursor: pointer; margin-top: 14px; margin-bottom: 30px;
-    }
-    .submit-btn:hover { background: #174272; }
-    .remarks-row { display: flex; gap: 14px; margin-top: 12px; }
-    .remarks-block { flex: 1; }
-    .remarks-block textarea { width: 100%; min-width: 0; resize: vertical; border-radius: 6px; border: 1px solid #b7c6e2; background: #f7fafb; font-size: 1em; }
-    .remarks-block .attr-val { background: #f5f6fa; border-radius: 5px; padding: 5px 7px; min-height: 44px; display: block; }
-
-    /* Collapsible styles */
-    .collapsible-label {
-      cursor: pointer; 
-      background: #eef4fc; 
-      border-radius: 7px 7px 0 0;
-      font-weight: bold; 
-      padding: 8px 16px 8px 10px; 
-      user-select: none;
-      transition: background 0.12s;
-      margin-bottom: 0;
-      margin-top: 12px;
+    .only-print { display: none; }
+    .print-btn-group { display: inline-flex; gap: 10px; align-items: center; }
+    .print-dropdown {
+      display: inline-block;
       position: relative;
+      margin-right: 8px;
     }
-    .collapsible-label::after {
-      content: '▼';
-      float: right;
-      font-size: 0.93em;
-      color: #888;
-      transition: transform 0.2s;
+    .print-dropdown-btn {
+      font-size:0.96em;
+      margin-top:3px;
+      margin-right:3px;
+      cursor: pointer;
+      padding: 5px 10px;
     }
-    .collapsible-label.collapsed::after { content: '►'; }
-    .collapsible-content {
+    .print-dropdown-menu {
       display: none;
-      background: #fafbff;
-      padding: 14px 10px 8px 18px;
-      border-radius: 0 0 7px 7px;
-      border-top: 1px solid #e1e6f1;
-      margin-bottom: 7px;
+      position: absolute;
+      right: 0;
+      top: 29px;
+      background: #fff;
+      border: 1px solid #c0d7f4;
+      border-radius: 6px;
+      min-width: 160px;
+      z-index: 10;
+      box-shadow: 0 6px 16px rgba(34,94,164,0.13);
     }
-    .collapsible-content.open { display: block; }
-
-    @media (max-width: 900px) {
-      #main-content { flex-direction: column; }
-      #questions-list { width: 100%; max-width: none; min-width: 0; border-right: none; border-bottom: 2px solid #dde3ec;}
-      #details-panel { padding: 20px 10px 10px 10px;}
-      .remarks-row { flex-direction: column; gap: 8px; }
+    .print-dropdown.open .print-dropdown-menu { display: block; }
+    .print-dropdown-menu button {
+      display: block;
+      width: 100%;
+      border: none;
+      background: none;
+      text-align: left;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+    .print-dropdown-menu button:hover {
+      background: #f1f8ff;
+    }
+    @media (max-width: 700px) {
+      .print-btn-group { flex-direction: column; align-items: stretch; }
     }
   </style>
 </head>
 <body>
   <div id="admin-bar">
+    <span class="print-btn-group">
+      <button id="printAllBtn">Print All (filtered)</button>
+      <button id="printAnsweredBtn">Print Only Answered</button>
+    </span>
+    <button id="exportAnswersBtn">Export Answers</button>
+    <input type="file" id="importAnswersInput" style="display:none;">
+    <button id="importAnswersBtn">Import Answers</button>
+    <span id="importExportStatus" style="margin-left:10px;color:#215b25;font-weight:bold;"></span>
+    <span style="flex:0 0 36px;"></span>
     <span><b>Admin Mode:</b></span>
     <button id="toggleAdminBtn">Enable Editing</button>
     <button id="downloadJsonBtn" style="display:none;">Download JSON</button>
     <span id="adminStatus" style="margin-left:16px;"></span>
   </div>
+  <div id="version-bar">SIRE2.0-WebApp v1.5.8 (2025-06-28)</div>
   <div id="container">
     <div id="filters">
       <div id="checkbox-filters">
@@ -142,6 +88,8 @@
         <label for="humanCheck">Human</label>
         <input type="checkbox" id="processCheck" checked>
         <label for="processCheck">Process</label>
+        <input type="checkbox" id="photoCheck" checked>
+        <label for="photoCheck">Photo</label>
       </div>
       <div id="vessel-checkbox-filters">
         <label>Vessel Type:</label>
@@ -162,6 +110,8 @@
         <div style="color:#aaa; font-size: 1.1em;">Select a question to view details.</div>
       </div>
     </div>
+    <div id="question-counter"></div>
+    <div id="printSingleView" class="only-print"></div>
   </div>
   <script>
     let questionsData = [];
@@ -169,23 +119,21 @@
     let selectedIdx = -1;
     let filters = {};
     let allColumns = [];
-    let filterColumns = [
-      "Question Response Type", "Photo Response Requirement"
-    ];
-    let responseTypeChecks = { hardware: true, human: true, process: true };
+    let filterColumns = ["Question Response Type"];
+    let responseTypeChecks = { hardware: true, human: true, process: true, photo: true };
     let vesselTypeChecks = { chemical: true, lng: true, lpg: true, oil: true };
-    let questionTypeChecks = {}; // Dynamically populated
+    let questionTypeChecks = {};
     let adminMode = false;
+    let questionAnswers = {};
 
-    // Collapsible state
+    function getQNo(q) { return q['No.'] || q['No']; }
     if (typeof window.collapsibleState === 'undefined') window.collapsibleState = {};
     function toggleCollapse(cid) {
       window.collapsibleState[cid] = !window.collapsibleState[cid];
       renderDetailsPanel();
     }
-
     function niceLabel(key) {
-      if (key === "No.") return "Question Number";
+      if (key === "No." || key === "No") return "Question Number";
       if (key === "Question") return "Question Text";
       if (key === "Question Type") return "Question Type";
       if (key === "Risk Level") return "Risk Calculation Factor";
@@ -194,9 +142,10 @@
       if (key === "Suggested Inspector Actions") return "Suggested Inspector Actions";
       if (key === "Expected Evidence") return "Question Expected Evidence";
       if (key === "Potential Grounds for Negative Observations") return "Potential Ground for Negative Observations";
+      if (key === "ROVIQ List") return "ROVIQ List";
+      if (key === "Vessel Type") return "Vessel Type";
       return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     }
-
     function padQuestionNumber(qn) {
       if (!qn) return "";
       let parts = qn.toString().split('.');
@@ -204,7 +153,6 @@
       parts = parts.map(x => x.padStart(2, '0'));
       return parts.slice(0, 4).join('.');
     }
-
     function getCombinedResponseType(q) {
       let types = [];
       if (
@@ -221,14 +169,19 @@
       ) types.push("Process");
       return types.length ? types.join(", ") : "";
     }
-
     function getVesselTypes(q) {
       return (q["Vessel Type"] || "").split(",").map(v => v.trim()).filter(v => v);
     }
 
-    // ADMIN MODE HANDLERS
     document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('toggleAdminBtn').onclick = function() {
+        if (!adminMode) {
+          const pw = prompt("Enter admin password:");
+          if (pw !== "sireadmin2025") {
+            alert("Incorrect password.");
+            return;
+          }
+        }
         adminMode = !adminMode;
         this.textContent = adminMode ? "Disable Editing" : "Enable Editing";
         document.getElementById('downloadJsonBtn').style.display = adminMode ? "" : "none";
@@ -238,6 +191,55 @@
       document.getElementById('downloadJsonBtn').onclick = function() {
         downloadJson();
       };
+      document.getElementById('hardwareCheck').onchange = function() { responseTypeChecks.hardware = this.checked; applyFilters(); };
+      document.getElementById('humanCheck').onchange = function() { responseTypeChecks.human = this.checked; applyFilters(); };
+      document.getElementById('processCheck').onchange = function() { responseTypeChecks.process = this.checked; applyFilters(); };
+      document.getElementById('photoCheck').onchange = function() { responseTypeChecks.photo = this.checked; applyFilters(); };
+
+      // Export/Import
+      document.getElementById('exportAnswersBtn').onclick = function() {
+        const blob = new Blob([JSON.stringify(questionAnswers, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "sire_answers_export.json";
+        a.click();
+        setTimeout(() => { URL.revokeObjectURL(url); }, 600);
+        document.getElementById('importExportStatus').textContent = "Exported!";
+        setTimeout(() => { document.getElementById('importExportStatus').textContent = ""; }, 1800);
+      };
+      document.getElementById('importAnswersBtn').onclick = function() {
+        document.getElementById('importAnswersInput').click();
+      };
+      document.getElementById('importAnswersInput').onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          try {
+            const obj = JSON.parse(event.target.result);
+            if (typeof obj === "object") {
+              questionAnswers = obj;
+              renderDetailsPanel();
+              document.getElementById('importExportStatus').textContent = "Imported!";
+              setTimeout(() => { document.getElementById('importExportStatus').textContent = ""; }, 1800);
+            }
+          } catch (err) {
+            alert("Invalid file format.");
+          }
+        };
+        reader.readAsText(file);
+        this.value = '';
+      };
+
+      // PRINT ALL (FILTERED)
+      document.getElementById('printAllBtn').onclick = function() {
+        printPGNOAnswers(getVisibleQuestions(), "all", true);
+      };
+      // PRINT ONLY ANSWERED
+      document.getElementById('printAnsweredBtn').onclick = function() {
+        printPGNOAnswers(getVisibleQuestions(), "answered", false);
+      };
     });
 
     fetch('sire_questions_all_columns_named.json')
@@ -246,7 +248,6 @@
         questionsData = data;
         allColumns = Object.keys(questionsData[0]);
         setupFilters();
-        setupCheckboxFilters();
         setupVesselCheckboxFilters();
         setupQTypeCheckboxFilters();
         applyFilters();
@@ -278,34 +279,12 @@
       search.oninput = e => { filters['search'] = e.target.value.toLowerCase(); applyFilters(); }
       filtersArea.appendChild(search);
     }
-
-    function setupCheckboxFilters() {
-      document.getElementById('hardwareCheck').onchange = function() {
-        responseTypeChecks.hardware = this.checked; applyFilters();
-      };
-      document.getElementById('humanCheck').onchange = function() {
-        responseTypeChecks.human = this.checked; applyFilters();
-      };
-      document.getElementById('processCheck').onchange = function() {
-        responseTypeChecks.process = this.checked; applyFilters();
-      };
-    }
-
     function setupVesselCheckboxFilters() {
-      document.getElementById('chemicalCheck').onchange = function() {
-        vesselTypeChecks.chemical = this.checked; applyFilters();
-      };
-      document.getElementById('lngCheck').onchange = function() {
-        vesselTypeChecks.lng = this.checked; applyFilters();
-      };
-      document.getElementById('lpgCheck').onchange = function() {
-        vesselTypeChecks.lpg = this.checked; applyFilters();
-      };
-      document.getElementById('oilCheck').onchange = function() {
-        vesselTypeChecks.oil = this.checked; applyFilters();
-      };
+      document.getElementById('chemicalCheck').onchange = function() { vesselTypeChecks.chemical = this.checked; applyFilters(); };
+      document.getElementById('lngCheck').onchange = function() { vesselTypeChecks.lng = this.checked; applyFilters(); };
+      document.getElementById('lpgCheck').onchange = function() { vesselTypeChecks.lpg = this.checked; applyFilters(); };
+      document.getElementById('oilCheck').onchange = function() { vesselTypeChecks.oil = this.checked; applyFilters(); };
     }
-
     function setupQTypeCheckboxFilters() {
       const qtypeDiv = document.getElementById('qtype-checkbox-filters');
       qtypeDiv.innerHTML = '';
@@ -329,17 +308,22 @@
         qtypeDiv.appendChild(cbLabel);
       });
     }
-
     function getVisibleQuestions() {
       let questions = filteredQuestions.filter(q =>
-        q['No.'] && q['Question'] &&
+        getQNo(q) && q['Question'] &&
         q['Question'].trim().toLowerCase() !== "question"
       );
       const useHardware = responseTypeChecks.hardware;
       const useHuman = responseTypeChecks.human;
       const useProcess = responseTypeChecks.process;
-      questions = (!useHardware && !useHuman && !useProcess) ? questions :
+      const usePhoto = responseTypeChecks.photo;
+      questions = (!useHardware && !useHuman && !useProcess && !usePhoto) ? questions :
         questions.filter(q => {
+          let isPhotoQ = (q["Photo Response"] || "").toString().trim().toLowerCase() === "y";
+          let allNone = (!q["Hardware Response Type"] || String(q["Hardware Response Type"]).trim().toLowerCase() === "none") &&
+                        (!q["Human Response Type"]   || String(q["Human Response Type"]).trim().toLowerCase() === "none") &&
+                        (!q["Process Response Type"] || String(q["Process Response Type"]).trim().toLowerCase() === "none");
+          if (usePhoto && isPhotoQ && allNone) return true;
           let match = false;
           if (useHardware && q["Hardware Response Type"] && !["false", "none", ""].includes(String(q["Hardware Response Type"]).trim().toLowerCase())) match = true;
           if (useHuman && q["Human Response Type"] && !["false", "none", ""].includes(String(q["Human Response Type"]).trim().toLowerCase())) match = true;
@@ -365,14 +349,13 @@
         questions.filter(q => !q["Question Type"] || enabledTypes.includes(q["Question Type"]));
       return questions;
     }
-
     function applyFilters() {
       filteredQuestions = questionsData.filter(q => {
         let match = true;
         for (let key in filters) {
           if (key === "search" && filters[key]) {
             if (
-              !(q['No.'] && q['No.'].toString().toLowerCase().includes(filters[key])) &&
+              !(getQNo(q) && getQNo(q).toString().toLowerCase().includes(filters[key])) &&
               !(q['Question'] && q['Question'].toLowerCase().includes(filters[key]))
             ) {
               return false;
@@ -381,7 +364,7 @@
             return false;
           }
         }
-        if (!q['No.'] || !q['Question'] || q['Question'].trim().toLowerCase() === "question") {
+        if (!getQNo(q) || !q['Question'] || q['Question'].trim().toLowerCase() === "question") {
           return false;
         }
         return match;
@@ -389,25 +372,31 @@
       selectedIdx = -1;
       renderQuestionsList();
       renderDetailsPanel();
+      renderCounter();
     }
-
     function renderQuestionsList() {
       const list = document.getElementById('questions-list');
       list.innerHTML = '';
       let visibleQuestions = getVisibleQuestions();
       if (!visibleQuestions.length) {
         list.innerHTML = '<div style="color:#888; font-size:1.1em;">No questions found.</div>';
+        renderCounter();
         return;
       }
       visibleQuestions.forEach((q, i) => {
         const div = document.createElement('div');
         div.className = 'qitem' + (selectedIdx === i ? ' selected' : '');
-        div.innerHTML = `<span>${padQuestionNumber(q['No.'])}</span>: <span>${q['Question']}</span>`;
+        div.innerHTML = `<span>${padQuestionNumber(getQNo(q))}</span>: <span>${q['Question']}</span>`;
         div.onclick = () => { selectedIdx = i; renderQuestionsList(); renderDetailsPanel(); };
         list.appendChild(div);
       });
+      renderCounter();
     }
-
+    function renderCounter() {
+      const visibleQuestions = getVisibleQuestions();
+      document.getElementById('question-counter').textContent =
+        'No of Questions appearing: ' + visibleQuestions.length;
+    }
     function renderDetailsPanel() {
       const panel = document.getElementById('details-panel');
       let visibleQuestions = getVisibleQuestions();
@@ -416,7 +405,20 @@
         return;
       }
       const q = visibleQuestions[selectedIdx];
-      let html = `<h2 style="margin-top:0">${q['No.'] ? 'Question ' + padQuestionNumber(q['No.']) : 'Question Details'}</h2>`;
+      const qNo = getQNo(q);
+
+      html = `<div>
+        <span style="float:right;">
+        <span class="print-dropdown" id="printDropdown_${selectedIdx}">
+          <button class="print-dropdown-btn" onclick="showPrintDropdown(${selectedIdx})">&#128424; Print</button>
+          <div class="print-dropdown-menu">
+            <button onclick="printSingleQuestion('${qNo.replace(/'/g, "\\'")}', 'all');hidePrintDropdown(${selectedIdx});">Print Everything</button>
+            <button onclick="printSingleQuestion('${qNo.replace(/'/g, "\\'")}', 'pgno');hidePrintDropdown(${selectedIdx});">Print Only PGNOs</button>
+          </div>
+        </span>
+        </span>
+        </div>`;
+      html += `<h2 style="margin-top:0">${qNo ? 'Question ' + padQuestionNumber(qNo) : 'Question Details'}</h2>`;
       if (q["Question Type"]) {
         html += `<div class="attr-row"><label>Question Type:</label><span class="attr-val">${q["Question Type"]}</span></div>`;
       }
@@ -424,32 +426,34 @@
       if (responseType) {
         html += `<div class="attr-row"><label>Question Response Type:</label><span class="attr-val">${responseType}</span></div>`;
       }
+      if (q["Vessel Type"]) {
+        html += `<div class="attr-row"><label>Vessel Type:</label><span class="attr-val">${q["Vessel Type"]}</span></div>`;
+      }
+      if (q["ROVIQ List"]) {
+        html += `<div class="attr-row"><label>ROVIQ List:</label><span class="attr-val">${q["ROVIQ List"]}</span></div>`;
+      }
       const visibleCols = [
-        "Question Text", "Photo Response Requirement", "Vessel Type",
+        "Question Text", "Photo Response Requirement",
         "Inspection Guidance", "Suggested Inspector Actions", "Expected Evidence", "Potential Grounds for Negative Observations"
       ];
       allColumns.forEach(key => {
         if (
           visibleCols.includes(key)
-          && !["Hardware Response Type", "Human Response Type", "Process Response Type"].includes(key)
+          && !["Hardware Response Type", "Human Response Type", "Process Response Type", "Vessel Type", "ROVIQ List"].includes(key)
           && q[key] !== ''
         ) {
-          // --- Collapsible panels for the four main fields ---
           if (
             key === "Inspection Guidance" ||
             key === "Suggested Inspector Actions" ||
-            key === "Expected Evidence" ||
-            key === "Potential Grounds for Negative Observations"
+            key === "Expected Evidence"
           ) {
             let cid = key.replace(/\s/g, '') + '_' + selectedIdx;
-            if (!(cid in window.collapsibleState)) window.collapsibleState[cid] = false; // collapsed by default
+            if (!(cid in window.collapsibleState)) window.collapsibleState[cid] = false;
             html += `<div>
               <div class="collapsible-label${window.collapsibleState[cid] ? '' : ' collapsed'}" id="colLabel_${cid}" onclick="toggleCollapse('${cid}')">
                 ${niceLabel(key)}
               </div>
               <div class="collapsible-content${window.collapsibleState[cid] ? ' open' : ''}" id="colContent_${cid}">`;
-
-            // Inner content (editable or not)
             if (key === "Inspection Guidance" || key === "Suggested Inspector Actions") {
               html += adminMode
                 ? `<textarea class="ems-edit-input" id="blockEdit_${key.replace(/\s/g, '')}_${selectedIdx}" rows="5" style="width:98%;">${q[key]}</textarea>`
@@ -490,110 +494,127 @@
                 html += `<button type="button" id="addExpEvBulletBtn" style="margin:14px 0 0 0;display:block;padding:7px 20px;border-radius:5px;border:none;background:#235ea4;color:#fff;font-weight:bold;cursor:pointer;">+ Add Bullet</button>`;
               }
             }
-            else if (key === "Potential Grounds for Negative Observations") {
-              let bullets = (Array.isArray(q.NegObs_Bullets) ? q.NegObs_Bullets : (q[key] || "").split(/\n?•/g).map(t => t.trim()).filter(Boolean));
-              if (!bullets.length && (q[key] || "")) {
-                bullets = (q[key] || "").split(/\n?•/g).map(t => t.trim()).filter(Boolean);
-              }
-              if (adminMode) q.NegObs_Bullets = bullets;
-              if (!q.NegObs_Remarks_PerBullet || !Array.isArray(q.NegObs_Remarks_PerBullet) || q.NegObs_Remarks_PerBullet.length !== bullets.length) {
-                let newArr = [];
-                for (let i = 0; i < bullets.length; ++i) {
-                  newArr[i] = q.NegObs_Remarks_PerBullet && q.NegObs_Remarks_PerBullet[i]
-                    ? q.NegObs_Remarks_PerBullet[i]
-                    : ["", ""];
-                }
-                q.NegObs_Remarks_PerBullet = newArr;
-              }
-              bullets.forEach((b, idx) => {
-                html += `<div style="margin:10px 0 10px 0;padding:8px 10px 8px 10px;border-left:3px solid #b2d5ff;background:#f8fbff;border-radius:6px;">`;
-                html += adminMode
-                  ? `<textarea class="ems-edit-input" id="negObsBullet_${selectedIdx}_${idx}" rows="2" style="width:99%;margin-bottom:8px;">${b}</textarea>`
-                  : `<div style="margin-bottom:6px;">• ${b}</div>`;
-                html += `<div class="remarks-row">`;
-                [1, 2].forEach(num => {
-                  html += `
-                    <div class="remarks-block">
-                      <label style="font-weight:bold;display:block;margin-bottom:4px;">Remarks ${num}:</label>
-                      ${
-                        adminMode
-                        ? `<textarea class="ems-edit-input" id="negObsRem_${selectedIdx}_${idx}_${num}" rows="3">${q.NegObs_Remarks_PerBullet[idx][num-1] || ""}</textarea>`
-                        : `<div class="attr-val">${q.NegObs_Remarks_PerBullet[idx][num-1] || "-"}</div>`
-                      }
-                    </div>
-                  `;
-                });
-                html += `</div></div>`;
-              });
-              if (adminMode) {
-                html += `<button type="button" id="addNegObsBulletBtn" style="margin:14px 0 0 0;display:block;padding:7px 20px;border-radius:5px;border:none;background:#235ea4;color:#fff;font-weight:bold;cursor:pointer;">+ Add Bullet</button>`;
-              }
-            }
-            html += `</div></div>`; // End collapsible content/wrapper
+            html += `</div></div>`;
           }
-          // --- End collapsible ---
-          // Other (non-collapsible) fields
-          else {
-            html += `<div class="attr-row"><label>${niceLabel(key)}:</label><span class="attr-val">${q[key]}</span></div>`;
+          // --- PGNO bullets and answers/comments/remarks ---
+          else if (key === "Potential Grounds for Negative Observations") {
+            let cid = key.replace(/\s/g, '') + '_' + selectedIdx;
+            if (!(cid in window.collapsibleState)) window.collapsibleState[cid] = false;
+            let bullets = (Array.isArray(q.NegObs_Bullets) ? q.NegObs_Bullets : (q[key] || "").split(/\n?•/g).map(t => t.trim()).filter(Boolean));
+            if (!bullets.length && (q[key] || "")) {
+              bullets = (q[key] || "").split(/\n?•/g).map(t => t.trim()).filter(Boolean);
+            }
+            if (adminMode) q.NegObs_Bullets = bullets;
+            if (!questionAnswers[qNo]) {
+              questionAnswers[qNo] = bullets.map(() => ({ answer: "", comment: "", remarks: ["", ""] }));
+            }
+            if (questionAnswers[qNo].length !== bullets.length) {
+              questionAnswers[qNo] = bullets.map((b, i) => questionAnswers[qNo][i] || { answer: "", comment: "", remarks: ["", ""] });
+            }
+            if (!q.NegObs_Remarks_PerBullet || !Array.isArray(q.NegObs_Remarks_PerBullet) || q.NegObs_Remarks_PerBullet.length !== bullets.length) {
+              let newArr = [];
+              for (let i = 0; i < bullets.length; ++i) {
+                newArr[i] = q.NegObs_Remarks_PerBullet && q.NegObs_Remarks_PerBullet[i]
+                  ? q.NegObs_Remarks_PerBullet[i]
+                  : ["", ""];
+              }
+              q.NegObs_Remarks_PerBullet = newArr;
+            }
+            html += `<div>
+              <div class="collapsible-label${window.collapsibleState[cid] ? '' : ' collapsed'}" id="colLabel_${cid}" onclick="toggleCollapse('${cid}')">
+                ${niceLabel(key)}
+              </div>
+              <div class="collapsible-content${window.collapsibleState[cid] ? ' open' : ''}" id="colContent_${cid}" style="padding-bottom:0;">`;
+            bullets.forEach((b, idx) => {
+              html += `
+                <div style="margin:7px 0 0 0; padding:6px 7px 4px 7px; background:#f6f8fb; border-left:3px solid #c3dafe; border-radius:5px;">
+                  <span style="font-size:1em;">• ${b}</span>
+                  <div style="display:flex; align-items:center; gap:8px; margin-top:4px; flex-wrap:wrap;">
+                    <select id="pgnoAnswer_${selectedIdx}_${idx}" style="font-size:0.98em; padding:2px 6px; border-radius:4px; border:1px solid #c9d6ee;">
+                      <option value="">Select</option>
+                      <option>Yes</option>
+                      <option>No</option>
+                      <option>Not Applicable</option>
+                      <option>Not Seen</option>
+                    </select>
+                    <input type="text" id="pgnoComment_${selectedIdx}_${idx}" style="width:33%; min-width:80px; border-radius:4px; border:1px solid #c9d6ee; font-size:0.99em;" placeholder="Comment">
+                  </div>
+                  <div class="remarks-row" style="margin-top:5px;">
+                    <div class="remarks-block">
+                      <label style="font-weight:bold;display:block;margin-bottom:3px;">Remarks 1:</label>
+                      <textarea class="ems-edit-input" id="negObsRem_${selectedIdx}_${idx}_1" rows="2">${questionAnswers[qNo] && questionAnswers[qNo][idx] ? (questionAnswers[qNo][idx].remarks ? questionAnswers[qNo][idx].remarks[0] : "") : ""}</textarea>
+                    </div>
+                    <div class="remarks-block">
+                      <label style="font-weight:bold;display:block;margin-bottom:3px;">Remarks 2:</label>
+                      <textarea class="ems-edit-input" id="negObsRem_${selectedIdx}_${idx}_2" rows="2">${questionAnswers[qNo] && questionAnswers[qNo][idx] ? (questionAnswers[qNo][idx].remarks ? questionAnswers[qNo][idx].remarks[1] : "") : ""}</textarea>
+                    </div>
+                  </div>
+                </div>
+              `;
+            });
+            html += `
+                <div style="margin:16px 0 3px 0;">
+                  <button type="button" id="savePGNOAnswersBtn" class="submit-btn" style="width:220px;">Save</button>
+                  <span id="savePGNOStatus" style="margin-left:16px; color:#287418; font-weight:600;"></span>
+                </div>
+              </div>
+            </div>`;
           }
         }
       });
-      html += `
-        <div class="answer-block">
-          <form id="answerForm" onsubmit="event.preventDefault();showAnswerSummary();">
-            <label>Answer:
-              <select id="answerSelect">
-                <option value="">Select</option>
-                <option>Yes</option>
-                <option>No</option>
-                <option>Not Applicable</option>
-                <option>Not Seen</option>
-              </select>
-            </label>
-            <br>
-            <label>Comments:<br>
-              <textarea id="commentBox"></textarea>
-            </label>
-            <br>
-            <button type="submit" class="submit-btn">Save Answer</button>
-          </form>
-        </div>
-        <div id="answerResult"></div>
-      `;
       panel.innerHTML = html;
 
-      // --- ADMIN SAVE LOGIC ---
-      // Expected Evidence
-      if (adminMode && q.ExpEv_Bullets) {
-        q.ExpEv_Bullets.forEach((bullet, idx) => {
-          const bulletInput = document.getElementById(`expEvBullet_${selectedIdx}_${idx}`);
-          const formInput   = document.getElementById(`expEvForm_${selectedIdx}_${idx}`);
-          const chInput     = document.getElementById(`expEvCh_${selectedIdx}_${idx}`);
-          const remInput    = document.getElementById(`expEvRem_${selectedIdx}_${idx}`);
-          if (bulletInput)  bulletInput.onchange = (e) => { bullet.text = e.target.value; updateExpectedEvidence(q); };
-          if (formInput)    formInput.onchange   = (e) => { bullet.form = e.target.value; };
-          if (chInput)      chInput.onchange     = (e) => { bullet.ch = e.target.value; };
-          if (remInput)     remInput.onchange    = (e) => { bullet.remarks = e.target.value; };
+      // Dropdown menu logic for print
+      window.showPrintDropdown = function(idx) {
+        document.querySelectorAll('.print-dropdown').forEach(d => d.classList.remove('open'));
+        document.getElementById('printDropdown_'+idx).classList.toggle('open');
+        // click outside closes
+        document.body.addEventListener('mousedown', closeDropdownHandler);
+      };
+      window.hidePrintDropdown = function(idx) {
+        document.getElementById('printDropdown_'+idx).classList.remove('open');
+        document.body.removeEventListener('mousedown', closeDropdownHandler);
+      };
+      function closeDropdownHandler(e) {
+        document.querySelectorAll('.print-dropdown').forEach(d => d.classList.remove('open'));
+        document.body.removeEventListener('mousedown', closeDropdownHandler);
+      }
+
+      // Restore answers/comments/remarks for bullets
+      const qNoStr = String(qNo);
+      if (questionAnswers[qNoStr]) {
+        questionAnswers[qNoStr].forEach((ac, idx) => {
+          const sel = document.getElementById(`pgnoAnswer_${selectedIdx}_${idx}`);
+          const inp = document.getElementById(`pgnoComment_${selectedIdx}_${idx}`);
+          const rem1 = document.getElementById(`negObsRem_${selectedIdx}_${idx}_1`);
+          const rem2 = document.getElementById(`negObsRem_${selectedIdx}_${idx}_2`);
+          if (sel) sel.value = ac.answer || "";
+          if (inp) inp.value = ac.comment || "";
+          if (rem1) rem1.value = (ac.remarks && ac.remarks[0]) || "";
+          if (rem2) rem2.value = (ac.remarks && ac.remarks[1]) || "";
         });
-        const addBtn = document.getElementById("addExpEvBulletBtn");
-        if (addBtn) {
-          addBtn.onclick = function() {
-            q.ExpEv_Bullets.push({text:"",form:"",ch:"",remarks:""});
-            updateExpectedEvidence(q);
-            renderDetailsPanel();
-          };
+      }
+      // Save handler for all bullets
+      const saveBtn = document.getElementById("savePGNOAnswersBtn");
+      if (saveBtn) {
+        saveBtn.onclick = function() {
+          if (!questionAnswers[qNoStr]) return;
+          questionAnswers[qNoStr].forEach((ac, idx) => {
+            const sel = document.getElementById(`pgnoAnswer_${selectedIdx}_${idx}`);
+            const inp = document.getElementById(`pgnoComment_${selectedIdx}_${idx}`);
+            const rem1 = document.getElementById(`negObsRem_${selectedIdx}_${idx}_1`);
+            const rem2 = document.getElementById(`negObsRem_${selectedIdx}_${idx}_2`);
+            ac.answer = sel ? sel.value : "";
+            ac.comment = inp ? inp.value : "";
+            ac.remarks = [rem1 ? rem1.value : "", rem2 ? rem2.value : ""];
+          });
+          document.getElementById("savePGNOStatus").textContent = "Saved!";
+          setTimeout(() => { document.getElementById("savePGNOStatus").textContent = ""; }, 1500);
         }
       }
-      // Potential Grounds for Negative Observations
+      // ADMIN LOGIC for editing PGNO bullets, plus remarks
       if (adminMode && q.NegObs_Bullets && q.NegObs_Remarks_PerBullet) {
         q.NegObs_Bullets.forEach((b, idx) => {
-          const bulletInput = document.getElementById(`negObsBullet_${selectedIdx}_${idx}`);
-          if (bulletInput) {
-            bulletInput.onchange = (e) => {
-              q.NegObs_Bullets[idx] = e.target.value;
-              q["Potential Grounds for Negative Observations"] = q.NegObs_Bullets.map(bb => bb.trim() ? "• " + bb.trim() : "").filter(Boolean).join("\n");
-            };
-          }
           [1,2].forEach(num => {
             const negInput = document.getElementById(`negObsRem_${selectedIdx}_${idx}_${num}`);
             if (negInput) {
@@ -610,7 +631,6 @@
           };
         }
       }
-      // Editable: Inspector Actions & Inspection Guidance
       if (adminMode) {
         ["Inspection Guidance", "Suggested Inspector Actions"].forEach(field => {
           const area = document.getElementById(`blockEdit_${field.replace(/\s/g, '')}_${selectedIdx}`);
@@ -624,13 +644,156 @@
       }
     }
 
-    function showAnswerSummary() {
-      const answer = document.getElementById('answerSelect').value;
-      const comment = document.getElementById('commentBox').value;
-      document.getElementById('answerResult').innerHTML = 
-        `<div style="background:#eaf6ff;padding:10px;border-radius:6px;margin-top:10px;">
-          <b>Saved!</b><br>Answer: <b>${answer || 'None'}</b><br>Comments: ${comment ? comment : '<i>None</i>'}
-        </div>`;
+    // PRINTING FUNCTIONS
+    function printPGNOAnswers(questionsArr, mode, printEverything) {
+      // mode: 'all' (print everything) or 'answered' (only answered)
+      // printEverything: true = print all fields, false = only PGNOs+answers
+      let html = `
+      <div id="printView" style="font-family:Segoe UI, Arial,sans-serif;max-width:900px;margin:auto;">
+        <h1 style="text-align:center;font-size:1.6em;margin-bottom:18px;">SIRE 2.0 PGNO Answers Report</h1>
+        <div style="font-size:1.07em;margin-bottom:20px;text-align:right;">Printed: ${new Date().toLocaleString()}</div>
+      `;
+      questionsArr.forEach((q, idx) => {
+        const qNo = getQNo(q);
+        const answers = questionAnswers[qNo] || [];
+        let show = true;
+        if (mode === "answered") {
+          show = (answers.length && answers.some(a =>
+            (a.answer && a.answer !== "") ||
+            (a.comment && a.comment !== "") ||
+            (a.remarks && (a.remarks[0] || a.remarks[1]))
+          ));
+        }
+        if (!show) return;
+        html += `<div class="print-break" style="page-break-inside:avoid;border-bottom:1px solid #c0d7f4;padding:8px 0 16px 0;margin-bottom:14px;">
+          <div style="font-weight:bold;font-size:1.1em;">${padQuestionNumber(qNo)}: ${q.Question || ""}</div>
+        `;
+        if (printEverything) {
+          // Print all standard fields before PGNOs
+          if (q["Question Type"]) html += `<div><b>Question Type:</b> ${q["Question Type"]}</div>`;
+          let rt = getCombinedResponseType(q);
+          if (rt) html += `<div><b>Question Response Type:</b> ${rt}</div>`;
+          if (q["Vessel Type"]) html += `<div><b>Vessel Type:</b> ${q["Vessel Type"]}</div>`;
+          if (q["ROVIQ List"]) html += `<div><b>ROVIQ List:</b> ${q["ROVIQ List"]}</div>`;
+          if (q["Inspection Guidance"]) html += `<div><b>Inspection Guidance:</b><br><pre style="white-space:pre-line;">${q["Inspection Guidance"]}</pre></div>`;
+          if (q["Suggested Inspector Actions"]) html += `<div><b>Suggested Inspector Actions:</b><br><pre style="white-space:pre-line;">${q["Suggested Inspector Actions"]}</pre></div>`;
+          if (Array.isArray(q.ExpEv_Bullets) && q.ExpEv_Bullets.length) {
+            html += `<div style="margin-top:8px;"><b>Expected Evidence:</b><ul style="margin:4px 0 10px 26px;">`;
+            q.ExpEv_Bullets.forEach(ev => {
+              html += `<li>${ev.text || ""}<br>
+                <b>eSMS Form:</b> ${ev.form || "-"}, 
+                <b>eSMS Ch. Ref:</b> ${ev.ch || "-"}, 
+                <b>Remarks:</b> ${ev.remarks || "-"}
+              </li>`;
+            });
+            html += `</ul></div>`;
+          }
+        }
+        // PGNOs (always printed)
+        if (Array.isArray(q.NegObs_Bullets)) {
+          q.NegObs_Bullets.forEach((b, i) => {
+            const a = answers[i] || {};
+            html += `<div style="margin:10px 0 0 16px;font-size:1.04em;">
+              <div style="font-weight:500;">• ${b}</div>
+              <div style="margin-left:18px;margin-top:1px;">
+                <b>Answer:</b> ${a.answer || "-"}
+                &nbsp;&nbsp; <b>Comment:</b> ${a.comment || "-"}<br>
+                <b>Remarks 1:</b> ${a.remarks && a.remarks[0] ? a.remarks[0] : "-"}
+                &nbsp;&nbsp; <b>Remarks 2:</b> ${a.remarks && a.remarks[1] ? a.remarks[1] : "-"}
+              </div>
+            </div>`;
+          });
+        }
+        html += `</div>`;
+      });
+      html += `</div>`;
+      let win = window.open('', '', 'width=900,height=800');
+      win.document.write('<html><head><title>Print PGNO Answers</title>');
+      win.document.write(`
+        <style>
+          body { font-family: Segoe UI, Arial,sans-serif; background:#fff; }
+          #printView { margin: 0 auto; }
+          @media print {
+            #printView { box-shadow:none; }
+            div { page-break-inside:avoid; }
+            h1 { font-size:1.3em;}
+            @page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+          }
+        </style>
+      `);
+      win.document.write('</head><body>');
+      win.document.write(html);
+      win.document.write('</body></html>');
+      win.document.close();
+      setTimeout(() => { win.print(); win.close(); }, 300);
+    }
+
+    function printSingleQuestion(qNo, which) {
+      // which: 'all' or 'pgno'
+      const q = questionsData.find(x => getQNo(x) === qNo);
+      const answers = questionAnswers[qNo] || [];
+      let html = `
+      <div id="printSingleView" style="font-family:Segoe UI, Arial,sans-serif;max-width:900px;margin:auto;">
+        <h1 style="text-align:center;font-size:1.5em;margin-bottom:18px;">SIRE 2.0 PGNO Answers Report</h1>
+        <div style="font-size:1.07em;margin-bottom:18px;text-align:right;">Printed: ${new Date().toLocaleString()}</div>
+        <div style="page-break-inside:avoid;border-bottom:1px solid #c0d7f4;padding:8px 0 16px 0;margin-bottom:14px;">
+          <div style="font-weight:bold;font-size:1.1em;">${padQuestionNumber(qNo)}: ${q.Question || ""}</div>
+      `;
+      if (which === 'all') {
+        if (q["Question Type"]) html += `<div><b>Question Type:</b> ${q["Question Type"]}</div>`;
+        let rt = getCombinedResponseType(q);
+        if (rt) html += `<div><b>Question Response Type:</b> ${rt}</div>`;
+        if (q["Vessel Type"]) html += `<div><b>Vessel Type:</b> ${q["Vessel Type"]}</div>`;
+        if (q["ROVIQ List"]) html += `<div><b>ROVIQ List:</b> ${q["ROVIQ List"]}</div>`;
+        if (q["Inspection Guidance"]) html += `<div><b>Inspection Guidance:</b><br><pre style="white-space:pre-line;">${q["Inspection Guidance"]}</pre></div>`;
+        if (q["Suggested Inspector Actions"]) html += `<div><b>Suggested Inspector Actions:</b><br><pre style="white-space:pre-line;">${q["Suggested Inspector Actions"]}</pre></div>`;
+        if (Array.isArray(q.ExpEv_Bullets) && q.ExpEv_Bullets.length) {
+          html += `<div style="margin-top:8px;"><b>Expected Evidence:</b><ul style="margin:4px 0 10px 26px;">`;
+          q.ExpEv_Bullets.forEach(ev => {
+            html += `<li>${ev.text || ""}<br>
+              <b>eSMS Form:</b> ${ev.form || "-"}, 
+              <b>eSMS Ch. Ref:</b> ${ev.ch || "-"}, 
+              <b>Remarks:</b> ${ev.remarks || "-"}
+            </li>`;
+          });
+          html += `</ul></div>`;
+        }
+      }
+      // PGNOs always print
+      if (Array.isArray(q.NegObs_Bullets)) {
+        q.NegObs_Bullets.forEach((b, i) => {
+          const a = answers[i] || {};
+          html += `<div style="margin:10px 0 0 16px;font-size:1.04em;">
+            <div style="font-weight:500;">• ${b}</div>
+            <div style="margin-left:18px;margin-top:1px;">
+              <b>Answer:</b> ${a.answer || "-"}
+              &nbsp;&nbsp; <b>Comment:</b> ${a.comment || "-"}<br>
+              <b>Remarks 1:</b> ${a.remarks && a.remarks[0] ? a.remarks[0] : "-"}
+              &nbsp;&nbsp; <b>Remarks 2:</b> ${a.remarks && a.remarks[1] ? a.remarks[1] : "-"}
+            </div>
+          </div>`;
+        });
+      }
+      html += `</div></div>`;
+      let win = window.open('', '', 'width=900,height=800');
+      win.document.write('<html><head><title>Print PGNO Answers</title>');
+      win.document.write(`
+        <style>
+          body { font-family: Segoe UI, Arial,sans-serif; background:#fff; }
+          #printSingleView { margin: 0 auto; }
+          @media print {
+            #printSingleView { box-shadow:none; }
+            div { page-break-inside:avoid; }
+            h1 { font-size:1.3em;}
+            @page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+          }
+        </style>
+      `);
+      win.document.write('</head><body>');
+      win.document.write(html);
+      win.document.write('</body></html>');
+      win.document.close();
+      setTimeout(() => { win.print(); win.close(); }, 300);
     }
 
     function downloadJson() {
